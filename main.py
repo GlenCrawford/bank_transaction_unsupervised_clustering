@@ -2,6 +2,7 @@ import glob
 import os
 
 import pandas as pd
+import kmodes.kprototypes
 
 import data.merchant_normalization_mapping_expressions
 
@@ -11,8 +12,7 @@ INPUT_DATA_FILE_PATTERN = '*.csv'
 COLUMN_NAMES = ['Date', 'Amount', 'Merchant', 'Balance After']
 COLUMNS_TO_USE = ['Amount', 'Merchant']
 
-# Column "Amount" values are of type: float64.
-# Column "Merchant" values are of type: object (really string).
+NUMBER_OF_CLUSTERS = 7
 
 os.chdir(INPUT_DATA_DIRECTORY)
 
@@ -47,6 +47,28 @@ data_frame['Merchant'].replace(
   inplace = True
 )
 
-unique_merchants = data_frame['Merchant'].unique()
-unique_merchants.sort()
-print(unique_merchants)
+# One-hot encode the Merchant column.
+categorized_data_frame = pd.get_dummies(
+  data_frame,
+  columns = ['Merchant'],
+  sparse = False
+)
+
+model = kmodes.kprototypes.KPrototypes(
+  n_clusters = NUMBER_OF_CLUSTERS,
+  init = 'Cao',
+  verbose = 0
+)
+
+clusters = model.fit_predict(
+  categorized_data_frame,
+  categorical = list(range(1, categorized_data_frame.shape[1])) # Index of columns that contain categorical data. All columns in the dataframe except the first.
+)
+
+# Insert the clusters into the dataframe.
+data_frame = data_frame.assign(Cluster = pd.Series(clusters).values)
+
+for cluster, cluster_data_frame in data_frame.groupby('Cluster'):
+  print('Cluster: ' + str(cluster))
+  for index, transaction in cluster_data_frame.iterrows():
+    print('  Amount: ' + str(transaction['Amount']) + ', Merchant: ' + str(transaction['Merchant']))
