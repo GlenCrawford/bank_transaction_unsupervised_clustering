@@ -1,1 +1,4 @@
+data/__pycache__/*.pyc
+
 data/*.csv
+data/merchant_normalization_mapping_expressions.py

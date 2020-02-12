@@ -3,11 +3,16 @@ import os
 
 import pandas as pd
 
+import data.merchant_normalization_mapping_expressions
+
 INPUT_DATA_DIRECTORY = 'data/'
 INPUT_DATA_FILE_PATTERN = '*.csv'
 
 COLUMN_NAMES = ['Date', 'Amount', 'Merchant', 'Balance After']
 COLUMNS_TO_USE = ['Amount', 'Merchant']
+
+# Column "Amount" values are of type: float64.
+# Column "Merchant" values are of type: object (really string).
 
 os.chdir(INPUT_DATA_DIRECTORY)
 
@@ -36,3 +41,12 @@ def load_input_data():
   )
 
 data_frame = load_input_data()
+
+data_frame['Merchant'].replace(
+  regex = data.merchant_normalization_mapping_expressions.MERCHANT_NORMALIZATION_MAPPING_EXPRESSIONS,
+  inplace = True
+)
+
+unique_merchants = data_frame['Merchant'].unique()
+unique_merchants.sort()
+print(unique_merchants)
