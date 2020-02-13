@@ -1,6 +1,7 @@
 import glob
 import os
 
+import numpy as np
 import pandas as pd
 import kmodes.kprototypes
 
@@ -47,17 +48,20 @@ data_frame['Merchant'].replace(
   inplace = True
 )
 
-# One-hot encode the Merchant column.
+# Insert the Transaction Type feature.
+data_frame['Transaction Type'] = data_frame['Merchant'].map(data.merchant_normalization_mapping_expressions.MERCHANT_TRANSACTION_TYPE_MAPPINGS)
+
+# One-hot encode the Merchant and Transaction Type columns.
 categorized_data_frame = pd.get_dummies(
   data_frame,
-  columns = ['Merchant'],
+  columns = ['Merchant', 'Transaction Type'],
   sparse = False
 )
 
 model = kmodes.kprototypes.KPrototypes(
   n_clusters = NUMBER_OF_CLUSTERS,
-  init = 'Cao',
-  verbose = 0
+  init = 'Huang',
+  verbose = 1
 )
 
 clusters = model.fit_predict(
@@ -71,4 +75,4 @@ data_frame = data_frame.assign(Cluster = pd.Series(clusters).values)
 for cluster, cluster_data_frame in data_frame.groupby('Cluster'):
   print('Cluster: ' + str(cluster))
   for index, transaction in cluster_data_frame.iterrows():
-    print('  Amount: ' + str(transaction['Amount']) + ', Merchant: ' + str(transaction['Merchant']))
+    print('  Amount: ' + str(transaction['Amount']) + ', Merchant: ' + str(transaction['Merchant']) + ', Transaction type: ' + str(transaction['Transaction Type']))
